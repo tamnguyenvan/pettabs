@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+
+  "name": "PetTabs",
+  "description": "Transform your new tab with adorable pet images and soothing soundscapes. Start your day with the joy of pets!",
+  "version": "0.1.3",
+
+  "options_ui": {
+    "page": "options.html"
+  },
+
+  "action": {
+    "default_icon": "icon.png",
+    "default_popup": "popup.html"
+  },
+
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+
+  "content_scripts": [
+      {
+          "matches": ["<all_urls>"],
+          "js": ["js/vendor.js", "js/content_script.js"]
+      }
+  ],
+
+  "background": {
+    "service_worker": "js/background.js"
+  },
+
+  "permissions": [
+    "storage"
+  ],
+
+  "host_permissions": [
+    "<all_urls>"
+  ]
+}
