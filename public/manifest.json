@@ -24,6 +24,13 @@
     "128": "icon128.png"
   },
 
+  "web_accessible_resources": [
+    {
+      "resources": [ "offline-background.jpg" ],
+      "matches": [ "<all_urls>" ]
+    }
+  ],
+
   "content_scripts": [
       {
           "matches": ["<all_urls>"],

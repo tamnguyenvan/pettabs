@@ -1,136 +1,232 @@
-import React, { useState, useEffect, useRef } from 'react';
+// src/NewTab.tsx (đã sửa lỗi triệt để)
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import { Settings } from 'lucide-react';
+import { Settings as SettingsIcon } from 'lucide-react';
 import SettingsModal from './components/SettingsModal';
+import ToolTip from './components/ToolTip';
 import Clock from './components/Clock';
-import DailyInspiration from './components/DailyInspiration';
 import Fact from './components/Fact';
-import BackgroundImageLoader from './components/BackgroundImageLoader';
+import SoundWave from './components/SoundWave';
+import ImageAttribution from './components/ImageAttribution';
+import { getDailyContent } from './lib/data-manager';
+import { Settings, loadSettings, updateSettings } from './lib/settings';
 import { Soundscape } from './components/SettingsModal';
+import { Attribution, FactData } from './types';
 import { WORKER_URL } from './lib/constants';
 
 // --- Main App Component ---
 const NewTab = () => {
-    const [bgCategory, setBgCategory] = useState<string>(''); // Khởi tạo rỗng
-    const [music, setMusic] = useState('none');
-    const [volume, setVolume] = useState(0.5);
+    // === STATE MANAGEMENT ===
+    const [settings, setSettings] = useState<Settings>(() => loadSettings());
     const [soundscapes, setSoundscapes] = useState<Soundscape[]>([]);
-
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const audioRef = useRef<HTMLAudioElement>(null);
     
-    // Load all settings from localStorage on initial mount
+    const [dailyContent, setDailyContent] = useState<{
+        fact: FactData | null;
+        attribution: Attribution | null;
+    }>({ fact: null, attribution: null });
+    
+    // **STATE MỚI ĐỂ QUẢN LÝ BACKGROUND AN TOÀN**
+    const [backgroundUrl, setBackgroundUrl] = useState(''); 
+    
+    const [isLoading, setIsLoading] = useState(true);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const audioRef = useRef<HTMLAudioElement>(null);
+
+    // === SIDE EFFECTS ===
+
+    // 1. Theo dõi trạng thái mạng
     useEffect(() => {
-        // Load category sau khi component đã mount để đảm bảo BackgroundImageLoader nhận được prop
-        const storedBgCategory = localStorage.getItem('bgCategory') || 'cat';
-        setBgCategory(storedBgCategory);
-
-        const storedMusic = localStorage.getItem('backgroundMusic') || 'none';
-        setMusic(storedMusic);
-
-        const storedVolume = localStorage.getItem('musicVolume');
-        setVolume(storedVolume ? parseFloat(storedVolume) : 0.5);
-
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        return () => { /* cleanup */ };
     }, []);
 
-     // Fetch soundscapes một lần duy nhất khi app khởi động
+    // 2. Tải nội dung chính (ảnh, fact) khi category thay đổi
     useEffect(() => {
-        const fetchSoundscapes = async () => {
-            try {
-                const response = await fetch(`${WORKER_URL}/api/soundscapes`);
-                if (response.ok) {
-                    const data: Soundscape[] = await response.json();
-                    setSoundscapes(data);
+        let isActive = true;
+
+        const loadContent = async () => {
+            setIsLoading(true);
+            const category = settings.background.category;
+            if (!category) {
+                setIsLoading(false);
+                return;
+            }
+
+            const content = await getDailyContent(category);
+            
+            if (isActive && content) {
+                // Tách riêng việc tải và áp dụng background
+                if (content.image?.url) {
+                    // Preload ảnh, và chỉ khi xong mới cập nhật state
+                    preloadImage(content.image.url);
                 }
-            } catch (error) {
-                console.error("Failed to fetch soundscapes:", error);
+                
+                setDailyContent({
+                    fact: content.fact || null,
+                    attribution: content.image?.attribution || null,
+                });
             }
         };
 
-        fetchSoundscapes();
-    }, []);
+        // Hàm preload mới: khi tải xong sẽ cập nhật state URL
+        const preloadImage = (url: string) => {
+            const img = new Image();
+            img.src = url;
+            img.onload = () => {
+                if (isActive) {
+                    // CẬP NHẬT STATE CỦA REACT
+                    setBackgroundUrl(url); 
+                    // Set loading false sau khi ảnh đã sẵn sàng để hiển thị
+                    setTimeout(() => setIsLoading(false), 50); 
+                }
+            };
+            img.onerror = () => {
+                console.error("Failed to load background image:", url);
+                if (isActive) setIsLoading(false); // Vẫn phải tắt loading nếu lỗi
+            };
+        };
 
-    // Effect to control background music
+        loadContent();
+
+        return () => { isActive = false; };
+    }, [settings.background.category]);
+
+    // 3. Fetch danh sách soundscapes (chỉ một lần và khi online)
     useEffect(() => {
-        if (audioRef.current) {
-            audioRef.current.volume = volume;
+        if (isOnline) {
+            const fetchSoundscapes = async () => {
+                try {
+                    const response = await fetch(`${WORKER_URL}/api/soundscapes`);
+                    if (response.ok) {
+                        const data: Soundscape[] = await response.json();
+                        setSoundscapes(data);
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch soundscapes:", error);
+                }
+            };
+            fetchSoundscapes();
+        } else {
+            // Nếu offline, xóa danh sách soundscapes để tránh lỗi
+            setSoundscapes([]);
+        }
+    }, [isOnline]);
 
-            if (music === 'none') {
+    // 4. Xử lý logic nhạc nền
+    useEffect(() => {
+        if (isOnline && audioRef.current) {
+            audioRef.current.volume = settings.sound.volume;
+            if (settings.sound.music === 'none') {
                 audioRef.current.pause();
             } else {
-                // Tìm URL nhạc từ danh sách soundscapes đã fetch được
-                const currentTrack = soundscapes.find(s => s.key === music);
+                const currentTrack = soundscapes.find(s => s.key === settings.sound.music);
                 if (currentTrack) {
-                    // Chỉ thay đổi src nếu nó khác để tránh load lại không cần thiết
                     if (audioRef.current.src !== currentTrack.audio_url) {
                         audioRef.current.src = currentTrack.audio_url;
                     }
                     audioRef.current.play().catch(e => console.log('Autoplay was prevented.', e));
                 }
             }
+        } else if (audioRef.current) {
+            audioRef.current.pause();
         }
-    }, [music, volume, soundscapes])
+    }, [settings.sound.music, settings.sound.volume, soundscapes, isOnline]);
 
-    const handleSaveSettings = (settings: { bg: string; music: string; volume: number }) => {
-        // Chỉ cập nhật state nếu có thay đổi
-        if (settings.bg !== bgCategory) {
-            setBgCategory(settings.bg);
-            localStorage.setItem('bgCategory', settings.bg);
-        }
-        
-        setMusic(settings.music);
-        localStorage.setItem('backgroundMusic', settings.music);
+    // 5. Xử lý phím tắt cho Zen Mode
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                const newZenMode = !settings.appearance.zenMode;
+                let updates: Partial<Settings> = { appearance: { ...settings.appearance, zenMode: newZenMode } };
+                if (newZenMode && isOnline && settings.sound.music === 'none' && soundscapes.length > 0) {
+                    updates.sound = { ...settings.sound, music: soundscapes[0]?.key || 'none' };
+                }
+                setSettings(prev => updateSettings(updates));
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [settings, soundscapes, isOnline]);
+    
+    // === HANDLERS ===
+    const handleSaveSettings = useCallback((newSettings: { bg: string; music: string; zenMode: boolean }) => {
+        setSettings(prev => updateSettings({
+            appearance: { ...prev.appearance, zenMode: newSettings.zenMode },
+            background: { ...prev.background, category: newSettings.bg },
+            sound: { ...prev.sound, music: newSettings.music }
+        }));
+    }, []);
 
-        setVolume(settings.volume);
-        localStorage.setItem('musicVolume', settings.volume.toString());
-    };
-
+    // === RENDER ===
     return (
-        <div className="min-h-screen">
-            {/* Component này sẽ xử lý toàn bộ logic ảnh nền */}
-            {bgCategory && <BackgroundImageLoader category={bgCategory} />}
-
-            <main className="text-white min-h-screen flex flex-col justify-center items-center p-6 relative">
-                {/* Main Content - Always centered */}
-                <div className="flex flex-col items-center justify-center text-center w-full max-w-4xl mb-8">
-                    <Clock />
-                    <DailyInspiration />
-                </div>
-                
-                {/* Audio Element */}
+        // ÁP DỤNG BACKGROUND VÀO STYLE CỦA DIV GỐC
+        <div 
+            className={`min-h-screen bg-black bg-cover bg-center transition-opacity duration-1000 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+            style={{ backgroundImage: `url(${backgroundUrl})` }}
+        >
+            {/* Lớp phủ mờ để làm nổi bật text */}
+            <main className="text-white min-h-screen flex flex-col justify-center items-center p-6 relative bg-black/20">
                 <audio ref={audioRef} loop />
 
-                {/* Fact at bottom center */}
-                <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4">
-                    <Fact />
+                {/* Các phần còn lại của JSX giữ nguyên */}
+                <div className={`fixed bottom-6 left-6 ...`}>
+                    <Clock />
                 </div>
 
-                {/* Settings Button */}
-                <button 
-                    onClick={() => setIsSettingsOpen(true)}
-                    className="fixed bottom-6 right-6 bg-black/30 backdrop-blur-md rounded-full w-9 h-9 flex items-center justify-center shadow-lg hover:bg-black/50 transition-all"
-                >
-                    <Settings size={20} />
-                </button>
+                <div className="flex flex-col items-center justify-center text-center w-full max-w-2xl px-4 relative">
+                    <div className={`transition-opacity duration-1000 ease-in-out w-full ${settings.appearance.zenMode ? 'opacity-0 absolute' : 'opacity-100'}`}>
+                        <Fact factData={dailyContent.fact} />
+                    </div>
+                    <div className={`transition-opacity duration-1000 ease-in-out ${!settings.appearance.zenMode ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
+                        <div className="flex flex-col items-center gap-2">
+                            <SoundWave isPlaying={isOnline && settings.sound.music !== 'none'} />
+                            <div className="text-sm text-white/70 mt-2">
+                                {!isOnline ? 'Offline Mode' : (settings.sound.music === 'none' ? 'Sound is off' : 'Now Playing')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                {/* Settings Modal */}
-                <SettingsModal 
-                    isOpen={isSettingsOpen}
-                    onClose={() => setIsSettingsOpen(false)}
-                    onSave={handleSaveSettings}
-                    initialBg={bgCategory}
-                    initialMusic={music}
-                    initialVolume={volume}
-                    soundscapes={soundscapes}
-                />
+                <div className="fixed top-6 left-6 z-50">
+                    <div className="relative flex items-center gap-3">
+                        <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className={`bg-black/30 hover:bg-black/40 backdrop-blur-sm rounded-full w-9 h-9 flex items-center justify-center transition-all ${isSettingsOpen ? 'ring-1 ring-white/50' : ''}`} aria-label="Settings">
+                            <SettingsIcon size={18} className="text-white/70 hover:text-white/90 transition-colors" />
+                        </button>
+                        {!settings.appearance.zenMode && <ToolTip />}
+                    </div>
+                    <SettingsModal
+                        isOpen={isSettingsOpen}
+                        onClose={() => setIsSettingsOpen(false)}
+                        onSave={handleSaveSettings}
+                        initialBg={settings.background.category}
+                        initialMusic={settings.sound.music}
+                        initialZenMode={settings.appearance.zenMode}
+                        soundscapes={soundscapes}
+                        isOnline={isOnline}
+                    />
+                </div>
+
+                {dailyContent.attribution && (
+                    <div className={`fixed bottom-6 right-6 transition-opacity duration-1000 ease-in-out ${settings.appearance.zenMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                        <ImageAttribution 
+                            source_url={dailyContent.attribution.source_url}
+                            photographer_name={dailyContent.attribution.photographer_name}
+                        />
+                    </div>
+                )}
             </main>
         </div>
     );
 };
 
-
-// --- Render the App ---
+// --- Render App ---
 ReactDOM.render(
   <React.StrictMode>
     <NewTab />

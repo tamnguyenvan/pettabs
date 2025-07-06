@@ -1,0 +1,63 @@
+import { Soundscape } from '../components/SettingsModal';
+import { Attribution } from '../types';
+
+export interface Settings {
+  appearance: {
+    zenMode: boolean;
+    showZenTooltip?: boolean;
+  };
+  background: {
+    category: string;
+    attribution: Attribution | null;
+  };
+  sound: {
+    music: string;
+    volume: number;
+    soundscapes: Soundscape[];
+  };
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+  appearance: {
+    zenMode: false,
+    showZenTooltip: true,
+  },
+  background: {
+    category: 'cat',
+    attribution: null,
+  },
+  sound: {
+    music: 'none',
+    volume: 0.5,
+    soundscapes: [],
+  },
+};
+
+const SETTINGS_STORAGE_KEY = 'pettabs_settings';
+
+export const loadSettings = (): Settings => {
+  try {
+    const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (savedSettings) {
+      return { ...DEFAULT_SETTINGS, ...JSON.parse(savedSettings) };
+    }
+  } catch (error) {
+    console.error('Failed to load settings:', error);
+  }
+  return { ...DEFAULT_SETTINGS };
+};
+
+export const saveSettings = (settings: Settings): void => {
+  try {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  } catch (error) {
+    console.error('Failed to save settings:', error);
+  }
+};
+
+export const updateSettings = (updates: Partial<Settings>): Settings => {
+  const currentSettings = loadSettings();
+  const newSettings = { ...currentSettings, ...updates };
+  saveSettings(newSettings);
+  return newSettings;
+};
