@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Palette, Info, Sparkles, Wind } from 'lucide-react';
+import { X, Info, Sparkles, Wind, Settings, MessageCircle } from 'lucide-react';
 
 // Định nghĩa Soundscape ở đây để tái sử dụng
 export interface Soundscape {
@@ -86,7 +86,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                             onClick={() => setActiveTab('appearance')}
                             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'appearance' ? 'text-white border-b-2 border-white' : 'text-white/60 hover:text-white'}`}
                         >
-                            <Palette size={16} />
+                            <Settings size={16} />
                             General
                         </button>
                         <button
@@ -193,6 +193,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                             </a>
                                         </div>
                                     </div>
+                                </div>
+                                <div className="pt-4 border-t border-white/10">
+                                    <h4 className="text-sm font-medium text-white/90 mb-3">Feedback</h4>
+                                    <p className="text-sm text-white/70 mb-3">
+                                        Have suggestions or found a bug? We'd love to hear from you!
+                                    </p>
+                                    <a 
+                                        href="https://docs.google.com/spreadsheets/d/1QK18XLihI7kdHWqQfTSq3_CuC6G8McudQIBuKCOXJBM/edit?usp=sharing" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center text-sm text-blue-300 hover:underline"
+                                    >
+                                        <MessageCircle className="w-4 h-4 mr-2" /> Submit Feedback
+                                    </a>
                                 </div>
                                 <div className="pt-4 border-t border-white/10">
                                     <h4 className="text-sm font-medium text-white/90 mb-3">Attributions</h4>

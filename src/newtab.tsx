@@ -8,6 +8,7 @@ import Clock from './components/Clock';
 import Fact from './components/Fact';
 import SoundWave from './components/SoundWave';
 import ImageAttribution from './components/ImageAttribution';
+import Inspiration from './components/Inspiration';
 import { getDailyContent } from './lib/data-manager';
 import { Settings, loadSettings, updateSettings } from './lib/settings';
 import { Soundscape } from './components/SettingsModal';
@@ -186,34 +187,41 @@ const NewTab = () => {
             style={{ backgroundImage: `url(${backgroundUrl})` }}
         >
             {/* Lớp phủ mờ để làm nổi bật text */}
-            <main className="text-white min-h-screen flex flex-col justify-center items-center p-6 relative bg-black/20">
+            <main className="text-white min-h-screen flex flex-col items-center p-6 relative bg-black/20">
                 <audio ref={audioRef} loop />
 
-                {/* Các phần còn lại của JSX giữ nguyên */}
+                {/* Clock in top left */}
                 <div className={`fixed bottom-6 left-6 ${settings.appearance.zenMode ? 'opacity-0 absolute' : 'opacity-100'}`}>
                     <Clock />
                 </div>
 
-                <div className="flex flex-col items-center justify-center text-center w-full max-w-2xl px-4 relative">
-                    <div className={`transition-opacity duration-1000 ease-in-out w-full ${settings.appearance.zenMode ? 'opacity-0 absolute' : 'opacity-100'}`}>
+                {/* Fact widget at bottom center */}
+                <div className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4 ${settings.appearance.zenMode ? 'opacity-0 absolute' : 'opacity-100'}`}>
+                    <div className="transition-opacity duration-1000 ease-in-out w-full">
                         <Fact factData={dailyContent.fact} />
-                    </div>
-                    <div className={`transition-opacity duration-1000 ease-in-out ${!settings.appearance.zenMode ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
-                        <div className="flex flex-col items-center gap-2">
-                            <SoundWave isPlaying={
-                                isOnline && 
-                                (settings.appearance.zenMode && settings.sound.zenMusic !== 'none')
-                            } />
-                            <div className="text-sm text-white/70 mt-2 select-none">
-                                {!isOnline ? 'Offline Mode' : (settings.sound.zenMusic === 'none' ? 'Sound is off' : 'Now Playing')}
-                            </div>
-                        </div>
                     </div>
                 </div>
 
+                {/* Zen mode sound wave - only show in zen mode */}
+                <div className={`fixed inset-0 flex items-center justify-center transition-opacity duration-1000 ease-in-out ${!settings.appearance.zenMode ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
+                    <div className="flex flex-col items-center gap-2">
+                        <SoundWave isPlaying={
+                            isOnline && 
+                            (settings.appearance.zenMode && settings.sound.zenMusic !== 'none')
+                        } />
+                        <div className="text-sm text-white/70 mt-2 select-none">
+                            {!isOnline ? 'Offline Mode' : (settings.sound.zenMusic === 'none' ? 'Sound is off' : 'Now Playing')}
+                        </div>
+                    </div>
+                </div>
+                {/* Settings button and modal */}
                 <div className="fixed top-6 left-6 z-50">
                     <div className="relative flex items-center gap-3">
-                        <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className={`bg-black/30 hover:bg-black/40 backdrop-blur-sm rounded-full w-9 h-9 flex items-center justify-center transition-all ${isSettingsOpen ? 'ring-1 ring-white/50' : ''}`} aria-label="Settings">
+                        <button 
+                            onClick={() => setIsSettingsOpen(!isSettingsOpen)} 
+                            className={`bg-black/30 hover:bg-black/40 backdrop-blur-sm rounded-full w-9 h-9 flex items-center justify-center transition-all ${isSettingsOpen ? 'ring-1 ring-white/50' : ''}`} 
+                            aria-label="Settings"
+                        >
                             <SettingsIcon size={18} className="text-white/70 hover:text-white/90 transition-colors" />
                         </button>
                         {!settings.appearance.showUsage && <Usage />}
@@ -230,6 +238,7 @@ const NewTab = () => {
                     />
                 </div>
 
+                {/* Image attribution */}
                 {dailyContent.attribution && (
                     <div className={`fixed bottom-6 right-6 transition-opacity duration-1000 ease-in-out ${settings.appearance.zenMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                         <ImageAttribution 
