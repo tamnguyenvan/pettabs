@@ -1,4 +1,3 @@
-import { Soundscape } from '../components/SettingsModal';
 import { Attribution } from '../types';
 
 export interface Settings {
@@ -11,9 +10,7 @@ export interface Settings {
     attribution: Attribution | null;
   };
   sound: {
-    music: string;
-    volume: number;
-    soundscapes: Soundscape[];
+    zenMusic: string;
   };
 }
 
@@ -27,9 +24,7 @@ export const DEFAULT_SETTINGS: Settings = {
     attribution: null,
   },
   sound: {
-    music: 'none',
-    volume: 0.5,
-    soundscapes: [],
+    zenMusic: 'none',
   },
 };
 

@@ -69,7 +69,6 @@ export async function getDailyContent(category: string): Promise<DailyContentPay
       if (!response.ok) throw new Error('Failed to fetch from worker');
 
       const data = await response.json();
-      console.log('data', data)
       
       // Đảm bảo dữ liệu nhận về có cấu trúc đúng
       if (data.image && data.fact) {

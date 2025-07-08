@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Palette, Volume2, Info } from 'lucide-react';
+import { X, Palette, Info, Sparkles, Wind } from 'lucide-react';
 
 // Định nghĩa Soundscape ở đây để tái sử dụng
 export interface Soundscape {
@@ -8,35 +8,40 @@ export interface Soundscape {
   audio_url: string;
 }
 
+// Props cho component
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (settings: { bg: string; music: string; zenMode: boolean }) => void;
+  onSave: (settings: { 
+    bg: string; 
+    zenMode: boolean; 
+    zenMusic: string;
+  }) => void;
   initialBg: string;
-  initialMusic: string;
   initialZenMode: boolean;
+  initialZenMusic: string;
   soundscapes: Soundscape[];
   isOnline: boolean;
 }
-
-type TabType = 'appearance' | 'audio' | 'about';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
     isOpen,
     onClose,
     onSave,
     initialBg,
-    initialMusic,
     initialZenMode,
+    initialZenMusic,
     soundscapes,
     isOnline
 }) => {
-    const [activeTab, setActiveTab] = useState<TabType>('appearance'); // Default to appearance tab
+    // === STATE MANAGEMENT ===
     const [bg, setBg] = useState(initialBg);
-    const [music, setMusic] = useState(initialMusic);
     const [zenMode, setZenMode] = useState(initialZenMode);
+    const [zenMusic, setZenMusic] = useState(initialZenMusic);
+    const [activeTab, setActiveTab] = useState<'appearance' | 'about'>('appearance');
 
-    // Xử lý phím Escape
+    // === SIDE EFFECTS ===
+    // Xử lý phím Escape để đóng modal
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose();
@@ -45,48 +50,44 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
 
-    // Reset lại state của form khi modal được mở hoặc các giá trị ban đầu thay đổi
+    // Reset lại state của form khi modal được mở hoặc giá trị ban đầu thay đổi
     useEffect(() => {
         setBg(initialBg);
-        setMusic(initialMusic);
         setZenMode(initialZenMode);
-    }, [isOpen, initialBg, initialMusic, initialZenMode]);
+        setZenMusic(initialZenMusic);
+    }, [isOpen, initialBg, initialZenMode, initialZenMusic]);
     
+    // Đảm bảo không render gì nếu modal không mở
     if (!isOpen) return null;
 
+    // === HANDLERS ===
     const handleSave = () => {
-        onSave({ bg, music, zenMode });
+        onSave({ bg, zenMode, zenMusic });
         onClose();
     };
 
+    // === RENDER ===
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-50 animate-fade-in">
-            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 w-[500px] h-[600px] flex flex-col text-white shadow-2xl border border-white/20">
-                <div className="flex justify-between items-center mb-8">
-                    <div>
-                        <h2 className="text-2xl font-semibold">Settings</h2>
-                    </div>
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 w-[500px] h-auto max-h-[90vh] flex flex-col text-white shadow-2xl border border-white/20">
+                
+                {/* Header */}
+                <div className="flex-shrink-0 flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-semibold">Settings</h2>
                     <button onClick={onClose} className="text-white/70 hover:text-white hover:bg-white/10 rounded-full p-2 transition-all">
                         <X size={20} />
                     </button>
                 </div>
                 
-                <div className="space-y-6">
+                <div className="flex-1 flex flex-col gap-6 overflow-hidden">
                     {/* Tab Navigation */}
-                    <div className="flex border-b border-white/10 -mx-8 px-8">
+                    <div className="flex-shrink-0 flex border-b border-white/10 -mx-8 px-8">
                         <button
                             onClick={() => setActiveTab('appearance')}
                             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'appearance' ? 'text-white border-b-2 border-white' : 'text-white/60 hover:text-white'}`}
                         >
                             <Palette size={16} />
-                            Appearance
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('audio')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'audio' ? 'text-white border-b-2 border-white' : 'text-white/60 hover:text-white'}`}
-                        >
-                            <Volume2 size={16} />
-                            Audio
+                            General
                         </button>
                         <button
                             onClick={() => setActiveTab('about')}
@@ -98,17 +99,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
 
                     {/* Tab Content */}
-                    <div className="flex-1 overflow-y-auto pr-2 -mr-2">
-                        {/* Appearance Tab */}
+                    <div className="flex-1 overflow-y-auto pr-4 -mr-4">
                         {activeTab === 'appearance' && (
-                            <div className="space-y-4 animate-fade-in">
+                            <div className="space-y-8 animate-fade-in">
+                                
                                 <div>
-                                    <label className="block text-sm font-medium mb-3 text-white/90">Background Theme</label>
+                                    <label className="block text-sm font-bold mb-3 text-white">Background Theme</label>
                                     <div className="grid grid-cols-3 gap-3">
                                         {[
                                             { value: 'cat', label: 'Cats', emoji: '🐱' },
                                             { value: 'dog', label: 'Dogs', emoji: '🐶' },
-                                            { value: 'nature', label: 'Nature', emoji: '🌿' }
+                                            { value: 'landscape', label: 'Landscape', emoji: '🏞️' }
                                         ].map((theme) => (
                                             <button
                                                 key={theme.value}
@@ -126,76 +127,69 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                         ))}
                                     </div>
                                 </div>
+                                
+                                <div className="border-t border-white/10"></div>
 
-                                <div className="pt-2">
-                                    <label className="flex items-center justify-between text-sm font-medium mb-2 text-white/90">
-                                        Zen Mode
-                                        <span className="text-xs font-mono bg-white/10 px-1.5 py-0.5 rounded">Ctrl/Cmd + K</span>
-                                    </label>
-                                    <label htmlFor="zen-toggle" className="flex items-center cursor-pointer">
-                                        <div className="relative">
-                                            <input type="checkbox" id="zen-toggle" className="sr-only" checked={zenMode} onChange={() => setZenMode(!zenMode)} />
-                                            <div className="block bg-white/20 w-14 h-8 rounded-full"></div>
-                                            <div 
-                                                className={`absolute top-1 bg-white w-6 h-6 rounded-full transition-transform duration-200 ease-in-out ${zenMode ? 'translate-x-6' : 'translate-x-1'}`}
-                                            ></div>
+                                <div className="space-y-6">
+                                    <div 
+                                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${!zenMode ? 'bg-white/10 border-white/30' : 'bg-transparent border-transparent opacity-60 hover:opacity-100 hover:bg-white/5'}`}
+                                        onClick={() => setZenMode(false)}
+                                    >
+                                        <div className="flex items-center gap-2 text-lg font-semibold">
+                                            <Sparkles size={20} className="text-yellow-300"/>
+                                            Normal Mode
+                                            {!zenMode && <span className="text-xs font-normal bg-green-400/20 text-green-300 px-2 py-0.5 rounded-full ml-auto">Active</span>}
                                         </div>
-                                    </label>
-                                </div>
-                            </div>
-                        )}
+                                        <p className="text-xs text-white/60 mt-1 mb-4">Show clock, facts, and other widgets.</p>
+                                    </div>
 
-                        {/* Audio Tab */}
-                        {activeTab === 'audio' && (
-                            <div className="space-y-6 animate-fade-in">
-                                <div>
-                                    <label className="block text-sm font-medium mb-2 text-white/90">Background Music</label>
-                                    <div className="relative">
+                                    <div 
+                                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${zenMode ? 'bg-white/10 border-white/30' : 'bg-transparent border-transparent opacity-60 hover:opacity-100 hover:bg-white/5'}`}
+                                        onClick={() => setZenMode(true)}
+                                    >
+                                        <div className="flex items-center gap-2 text-lg font-semibold">
+                                            <Wind size={20} className="text-blue-300"/>
+                                            Zen Mode
+                                            {zenMode && <span className="text-xs font-normal bg-blue-400/20 text-blue-300 px-2 py-0.5 rounded-full ml-auto">Active</span>}
+                                        </div>
+                                        <p className="text-xs text-white/60 mt-1 mb-4">Focus on the background with ambient sound. <span className="font-mono bg-white/10 px-1 py-0.5 rounded">Ctrl+K</span> to toggle.</p>
+
+                                        <label className="block text-xs font-medium mb-1 text-white/80">Ambient Sound</label>
                                         <select
-                                            value={music}
-                                            onChange={(e) => setMusic(e.target.value)}
+                                            value={zenMusic}
+                                            onClick={(e) => e.stopPropagation()}
+                                            onChange={(e) => setZenMusic(e.target.value)}
                                             className="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 focus:outline-none focus:border-white/40 focus:bg-white/20 transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                            disabled={!isOnline}
+                                            disabled={!isOnline || !zenMode}
                                         >
-                                            <option value="none" className="bg-gray-800 text-white">🔇 None</option>
-                                            {soundscapes.map((scape) => (
-                                                <option key={scape.key} value={scape.key} className="bg-gray-800 text-white">{scape.name}</option>
-                                            ))}
+                                            {soundscapes.map(s => <option key={s.key} value={s.key} className="bg-gray-800 text-white">{s.name}</option>)}
                                         </select>
-                                        {!isOnline && (
-                                            <div className="absolute inset-0 bg-black/60 rounded-xl flex items-center justify-center pointer-events-none">
-                                                <p className="text-xs text-white/70">Audio requires an internet connection</p>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
-                                
-
                             </div>
                         )}
-
-                        {/* About Tab */}
+                        
                         {activeTab === 'about' && (
                             <div className="space-y-6 animate-fade-in">
                                 <div className="space-y-4">
                                     <h3 className="text-lg font-semibold text-white/90">PetTabs</h3>
                                     <p className="text-sm text-white/70">
-                                        A beautiful new tab page with relaxing themes and sounds to enhance your browsing experience.
+                                        A purr-fect new tab page with relaxing pet themes and soothing sounds to brighten your day. Paws and enjoy the cuteness!
                                     </p>
                                     <div className="pt-4 space-y-3">
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm text-white/60">Version</span>
-                                            <span className="text-sm font-mono bg-white/10 px-2 py-1 rounded">1.0.0</span>
+                                            <span className="text-sm font-mono bg-white/10 px-2 py-1 rounded">0.1.3</span>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm text-white/60">Created by</span>
                                             <a 
-                                                href="https://github.com/tamnguyenvan" 
+                                                href="https://x.com/tamnvvn" 
                                                 target="_blank" 
                                                 rel="noopener noreferrer"
                                                 className="text-sm text-blue-300 hover:underline"
                                             >
-                                                @tamnguyenvan
+                                                @tamnvvn
                                             </a>
                                         </div>
                                     </div>
@@ -204,27 +198,23 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                     <h4 className="text-sm font-medium text-white/90 mb-3">Attributions</h4>
                                     <ul className="space-y-2 text-sm text-white/70">
                                         <li>• Icons by <a href="https://lucide.dev" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:underline">Lucide</a></li>
-                                        <li>• Backgrounds from <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:underline">Unsplash</a></li>
-                                        <li>• Sounds from <a href="https://www.zapsplat.com" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:underline">ZapSplat</a></li>
+                                        <li>• Images by <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:underline">Unsplash</a></li>
                                     </ul>
                                 </div>
                             </div>
                         )}
                     </div>
                     
-                    <div className="pt-4 flex gap-3">
-                        <button 
-                            onClick={onClose}
-                            className="flex-1 bg-white/10 hover:bg-white/20 text-white font-medium py-3 px-6 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-white/30"
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            onClick={handleSave}
-                            className="flex-1 bg-white text-gray-900 hover:bg-gray-100 font-medium py-3 px-6 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-white/30"
-                        >
-                            Save
-                        </button>
+                    {/* Nút Save/Cancel */}
+                    <div className="flex-shrink-0 pt-6 mt-auto border-t border-white/10 -mx-8 px-8 pb-0">
+                        <div className="flex gap-3">
+                            <button onClick={onClose} className="flex-1 bg-white/10 hover:bg-white/20 text-white font-medium py-3 px-6 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-white/30">
+                                Cancel
+                            </button>
+                            <button onClick={handleSave} className="flex-1 bg-white text-gray-900 hover:bg-gray-100 font-medium py-3 px-6 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-white/30">
+                                Save
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,5 +1,3 @@
-// src/NewTab.tsx (đã sửa lỗi triệt để)
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
@@ -30,7 +28,6 @@ const NewTab = () => {
     
     // **STATE MỚI ĐỂ QUẢN LÝ BACKGROUND AN TOÀN**
     const [backgroundUrl, setBackgroundUrl] = useState(''); 
-    
     const [isLoading, setIsLoading] = useState(true);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const audioRef = useRef<HTMLAudioElement>(null);
@@ -121,11 +118,13 @@ const NewTab = () => {
     // 4. Xử lý logic nhạc nền - Chỉ phát khi đang ở chế độ Zen
     useEffect(() => {
         if (isOnline && audioRef.current) {
-            audioRef.current.volume = settings.sound.volume;
-            if (settings.sound.music === 'none' || !settings.appearance.zenMode) {
+            // Xác định bản nhạc cần phát dựa trên chế độ hiện tại
+            const musicKey = settings.sound.zenMusic;
+
+            if (musicKey === 'none') {
                 audioRef.current.pause();
             } else {
-                const currentTrack = soundscapes.find(s => s.key === settings.sound.music);
+                const currentTrack = soundscapes.find(s => s.key === musicKey);
                 if (currentTrack) {
                     if (audioRef.current.src !== currentTrack.audio_url) {
                         audioRef.current.src = currentTrack.audio_url;
@@ -136,38 +135,46 @@ const NewTab = () => {
         } else if (audioRef.current) {
             audioRef.current.pause();
         }
-    }, [settings.sound.music, settings.sound.volume, soundscapes, isOnline, settings.appearance.zenMode]);
+    }, [
+        settings.appearance.zenMode, 
+        settings.sound.zenMusic,
+        soundscapes, 
+        isOnline
+    ]);
 
     // 5. Xử lý phím tắt cho Zen Mode
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
                 e.preventDefault();
-                const newZenMode = !settings.appearance.zenMode;
-                const updates: Partial<Settings> = { 
-                    appearance: { ...settings.appearance, zenMode: newZenMode },
-                    // Đặt nhạc thành 'none' khi thoát khỏi Zen Mode
-                    sound: newZenMode ? settings.sound : { ...settings.sound, music: 'none' }
-                };
-                
-                // Nếu bật Zen Mode và chưa có nhạc, chọn bài đầu tiên
-                if (newZenMode && isOnline && settings.sound.music === 'none' && soundscapes.length > 0) {
-                    updates.sound = { ...settings.sound, music: soundscapes[0]?.key || 'none' };
-                }
-                
-                setSettings(prev => updateSettings(updates));
+                // Chỉ cần đảo ngược trạng thái zenMode
+                setSettings(prev => updateSettings({
+                    appearance: { ...prev.appearance, zenMode: !prev.appearance.zenMode }
+                }));
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [settings, soundscapes, isOnline]);
+    }, []);
     
     // === HANDLERS ===
-    const handleSaveSettings = useCallback((newSettings: { bg: string; music: string; zenMode: boolean }) => {
+    const handleSaveSettings = useCallback((newSettings: { 
+        bg: string; 
+        zenMode: boolean; 
+        zenMusic: string;
+    }) => {
         setSettings(prev => updateSettings({
-            appearance: { ...prev.appearance, zenMode: newSettings.zenMode },
-            background: { ...prev.background, category: newSettings.bg },
-            sound: { ...prev.sound, music: newSettings.music }
+            appearance: {
+                ...prev.appearance,
+                zenMode: newSettings.zenMode
+            },
+            background: {
+                ...prev.background,
+                category: newSettings.bg
+            },
+            sound: {
+                zenMusic: newSettings.zenMusic
+            }
         }));
     }, []);
 
@@ -183,7 +190,7 @@ const NewTab = () => {
                 <audio ref={audioRef} loop />
 
                 {/* Các phần còn lại của JSX giữ nguyên */}
-                <div className={`fixed bottom-6 left-6 ...`}>
+                <div className={`fixed bottom-6 left-6 ${settings.appearance.zenMode ? 'opacity-0 absolute' : 'opacity-100'}`}>
                     <Clock />
                 </div>
 
@@ -193,9 +200,12 @@ const NewTab = () => {
                     </div>
                     <div className={`transition-opacity duration-1000 ease-in-out ${!settings.appearance.zenMode ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
                         <div className="flex flex-col items-center gap-2">
-                            <SoundWave isPlaying={isOnline && settings.sound.music !== 'none'} />
+                            <SoundWave isPlaying={
+                                isOnline && 
+                                (settings.appearance.zenMode && settings.sound.zenMusic !== 'none')
+                            } />
                             <div className="text-sm text-white/70 mt-2 select-none">
-                                {!isOnline ? 'Offline Mode' : (settings.sound.music === 'none' ? 'Sound is off' : 'Now Playing')}
+                                {!isOnline ? 'Offline Mode' : (settings.sound.zenMusic === 'none' ? 'Sound is off' : 'Now Playing')}
                             </div>
                         </div>
                     </div>
@@ -213,8 +223,8 @@ const NewTab = () => {
                         onClose={() => setIsSettingsOpen(false)}
                         onSave={handleSaveSettings}
                         initialBg={settings.background.category}
-                        initialMusic={settings.sound.music}
                         initialZenMode={settings.appearance.zenMode}
+                        initialZenMusic={settings.sound.zenMusic}
                         soundscapes={soundscapes}
                         isOnline={isOnline}
                     />
