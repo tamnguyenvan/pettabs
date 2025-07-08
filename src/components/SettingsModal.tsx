@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Palette, Volume2 } from 'lucide-react';
+import { X, Palette, Volume2, Info } from 'lucide-react';
 
 // Định nghĩa Soundscape ở đây để tái sử dụng
 export interface Soundscape {
@@ -19,7 +19,7 @@ interface SettingsModalProps {
   isOnline: boolean;
 }
 
-type TabType = 'appearance' | 'audio';
+type TabType = 'appearance' | 'audio' | 'about';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
     isOpen,
@@ -87,6 +87,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         >
                             <Volume2 size={16} />
                             Audio
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('about')}
+                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'about' ? 'text-white border-b-2 border-white' : 'text-white/60 hover:text-white'}`}
+                        >
+                            <Info size={16} />
+                            About
                         </button>
                     </div>
 
@@ -164,6 +171,43 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                 </div>
                                 
 
+                            </div>
+                        )}
+
+                        {/* About Tab */}
+                        {activeTab === 'about' && (
+                            <div className="space-y-6 animate-fade-in">
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-semibold text-white/90">PetTabs</h3>
+                                    <p className="text-sm text-white/70">
+                                        A beautiful new tab page with relaxing themes and sounds to enhance your browsing experience.
+                                    </p>
+                                    <div className="pt-4 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-white/60">Version</span>
+                                            <span className="text-sm font-mono bg-white/10 px-2 py-1 rounded">1.0.0</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-white/60">Created by</span>
+                                            <a 
+                                                href="https://github.com/tamnguyenvan" 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-blue-300 hover:underline"
+                                            >
+                                                @tamnguyenvan
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="pt-4 border-t border-white/10">
+                                    <h4 className="text-sm font-medium text-white/90 mb-3">Attributions</h4>
+                                    <ul className="space-y-2 text-sm text-white/70">
+                                        <li>• Icons by <a href="https://lucide.dev" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:underline">Lucide</a></li>
+                                        <li>• Backgrounds from <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:underline">Unsplash</a></li>
+                                        <li>• Sounds from <a href="https://www.zapsplat.com" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:underline">ZapSplat</a></li>
+                                    </ul>
+                                </div>
                             </div>
                         )}
                     </div>

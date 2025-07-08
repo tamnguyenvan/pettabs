@@ -4,7 +4,7 @@ import { Attribution } from '../types';
 export interface Settings {
   appearance: {
     zenMode: boolean;
-    showZenTooltip?: boolean;
+    showUsage?: boolean;
   };
   background: {
     category: string;
@@ -20,7 +20,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   appearance: {
     zenMode: false,
-    showZenTooltip: true,
+    showUsage: true,
   },
   background: {
     category: 'cat',

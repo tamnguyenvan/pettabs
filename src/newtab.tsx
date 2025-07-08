@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import { Settings as SettingsIcon } from 'lucide-react';
 import SettingsModal from './components/SettingsModal';
-import ToolTip from './components/ToolTip';
+import Usage from './components/Usage';
 import Clock from './components/Clock';
 import Fact from './components/Fact';
 import SoundWave from './components/SoundWave';
@@ -118,11 +118,11 @@ const NewTab = () => {
         }
     }, [isOnline]);
 
-    // 4. Xử lý logic nhạc nền
+    // 4. Xử lý logic nhạc nền - Chỉ phát khi đang ở chế độ Zen
     useEffect(() => {
         if (isOnline && audioRef.current) {
             audioRef.current.volume = settings.sound.volume;
-            if (settings.sound.music === 'none') {
+            if (settings.sound.music === 'none' || !settings.appearance.zenMode) {
                 audioRef.current.pause();
             } else {
                 const currentTrack = soundscapes.find(s => s.key === settings.sound.music);
@@ -136,7 +136,7 @@ const NewTab = () => {
         } else if (audioRef.current) {
             audioRef.current.pause();
         }
-    }, [settings.sound.music, settings.sound.volume, soundscapes, isOnline]);
+    }, [settings.sound.music, settings.sound.volume, soundscapes, isOnline, settings.appearance.zenMode]);
 
     // 5. Xử lý phím tắt cho Zen Mode
     useEffect(() => {
@@ -144,10 +144,17 @@ const NewTab = () => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
                 e.preventDefault();
                 const newZenMode = !settings.appearance.zenMode;
-                let updates: Partial<Settings> = { appearance: { ...settings.appearance, zenMode: newZenMode } };
+                const updates: Partial<Settings> = { 
+                    appearance: { ...settings.appearance, zenMode: newZenMode },
+                    // Đặt nhạc thành 'none' khi thoát khỏi Zen Mode
+                    sound: newZenMode ? settings.sound : { ...settings.sound, music: 'none' }
+                };
+                
+                // Nếu bật Zen Mode và chưa có nhạc, chọn bài đầu tiên
                 if (newZenMode && isOnline && settings.sound.music === 'none' && soundscapes.length > 0) {
                     updates.sound = { ...settings.sound, music: soundscapes[0]?.key || 'none' };
                 }
+                
                 setSettings(prev => updateSettings(updates));
             }
         };
@@ -187,7 +194,7 @@ const NewTab = () => {
                     <div className={`transition-opacity duration-1000 ease-in-out ${!settings.appearance.zenMode ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
                         <div className="flex flex-col items-center gap-2">
                             <SoundWave isPlaying={isOnline && settings.sound.music !== 'none'} />
-                            <div className="text-sm text-white/70 mt-2">
+                            <div className="text-sm text-white/70 mt-2 select-none">
                                 {!isOnline ? 'Offline Mode' : (settings.sound.music === 'none' ? 'Sound is off' : 'Now Playing')}
                             </div>
                         </div>
@@ -199,7 +206,7 @@ const NewTab = () => {
                         <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className={`bg-black/30 hover:bg-black/40 backdrop-blur-sm rounded-full w-9 h-9 flex items-center justify-center transition-all ${isSettingsOpen ? 'ring-1 ring-white/50' : ''}`} aria-label="Settings">
                             <SettingsIcon size={18} className="text-white/70 hover:text-white/90 transition-colors" />
                         </button>
-                        {!settings.appearance.zenMode && <ToolTip />}
+                        {!settings.appearance.showUsage && <Usage />}
                     </div>
                     <SettingsModal
                         isOpen={isSettingsOpen}

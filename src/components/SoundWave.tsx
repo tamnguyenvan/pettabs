@@ -73,7 +73,7 @@ const SoundWave = ({ isPlaying }: { isPlaying: boolean }) => {
   });
 
   return (
-    <div className="flex items-center justify-center h-48 gap-1">
+    <div className="flex items-center justify-center h-48 gap-1 select-none">
       {isPlaying ? bars : staticBars}
     </div>
   );

@@ -7,7 +7,7 @@ const Fact: React.FC<{ factData: FactData | null }> = ({ factData }) => {
   return (
     <div className="text-center mb-8">
       <p className="text-2xl">"{factData.content}"</p>
-      <p className="text-lg text-gray-400">— {factData.category}</p>
+      <p className="text-lg text-white/20">— {factData.category}</p>
     </div>
   );
 };
