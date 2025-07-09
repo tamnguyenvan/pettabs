@@ -8,7 +8,7 @@ import Clock from './components/Clock';
 import Fact from './components/Fact';
 import SoundWave from './components/SoundWave';
 import ImageAttribution from './components/ImageAttribution';
-import Inspiration from './components/Inspiration';
+import QuickLinks from './components/QuickLinks';
 import { getDailyContent } from './lib/data-manager';
 import { Settings, loadSettings, updateSettings } from './lib/settings';
 import { Soundscape } from './components/SettingsModal';
@@ -189,6 +189,11 @@ const NewTab = () => {
             {/* Lớp phủ mờ để làm nổi bật text */}
             <main className="text-white min-h-screen flex flex-col items-center p-6 relative bg-black/20">
                 <audio ref={audioRef} loop />
+
+                {/* QuickLinks at top center */}
+                <div className={`fixed top-6 left-1/2 transform -translate-x-1/2 w-full max-w-4xl px-4 z-40 ${settings.appearance.zenMode ? 'opacity-0 absolute' : 'opacity-100'}`}>
+                    <QuickLinks />
+                </div>
 
                 {/* Clock in top left */}
                 <div className={`fixed bottom-6 left-6 ${settings.appearance.zenMode ? 'opacity-0 absolute' : 'opacity-100'}`}>
