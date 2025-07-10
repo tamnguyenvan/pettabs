@@ -224,7 +224,7 @@ const NewTab = () => {
                     <div className="relative flex items-center gap-3">
                         <button 
                             onClick={() => setIsSettingsOpen(!isSettingsOpen)} 
-                            className={`bg-black/30 hover:bg-black/40 backdrop-blur-sm rounded-full w-9 h-9 flex items-center justify-center transition-all ${isSettingsOpen ? 'ring-1 ring-white/50' : ''}`} 
+                            className={`bg-white/5 hover:bg-white/10 backdrop-blur-sm rounded-full w-9 h-9 flex items-center justify-center transition-all ${isSettingsOpen ? 'ring-1 ring-white/50' : ''}`} 
                             aria-label="Settings"
                         >
                             <SettingsIcon size={18} className="text-white/70 hover:text-white/90 transition-colors" />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Info, Sparkles, Wind, Settings, MessageCircle } from 'lucide-react';
+import ZenDropdown from './ui/DropDown';
 
 // Định nghĩa Soundscape ở đây để tái sử dụng
 export interface Soundscape {
@@ -68,9 +69,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
     // === RENDER ===
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-50 animate-fade-in">
-            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 w-[500px] h-auto max-h-[90vh] flex flex-col text-white shadow-2xl border border-white/20">
-                
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 animate-fade-in">
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 w-[500px] h-auto max-h-[90vh] flex flex-col text-white shadow-2xl border border-white/5 transition-all duration-200">
                 {/* Header */}
                 <div className="flex-shrink-0 flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-semibold">Settings</h2>
@@ -144,27 +144,36 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                     </div>
 
                                     <div 
-                                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${zenMode ? 'bg-white/10 border-white/30' : 'bg-transparent border-transparent opacity-60 hover:opacity-100 hover:bg-white/5'}`}
+                                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer group 
+                                            ${zenMode 
+                                                ? 'bg-white/10 border-white/30 hover:border-white/50' 
+                                                : 'bg-transparent border-transparent opacity-60 hover:opacity-100 hover:bg-white/5'}
+                                        `}
                                         onClick={() => setZenMode(true)}
-                                    >
+                                        >
                                         <div className="flex items-center gap-2 text-lg font-semibold">
                                             <Wind size={20} className="text-blue-300"/>
                                             Zen Mode
-                                            {zenMode && <span className="text-xs font-normal bg-blue-400/20 text-blue-300 px-2 py-0.5 rounded-full ml-auto">Active</span>}
+                                            {zenMode && (
+                                            <span className="text-xs font-normal bg-blue-400/20 text-blue-300 px-2 py-0.5 rounded-full ml-auto">
+                                                Active
+                                            </span>
+                                            )}
                                         </div>
-                                        <p className="text-xs text-white/60 mt-1 mb-4">Focus on the background with ambient sound. <span className="font-mono bg-white/10 px-1 py-0.5 rounded">Ctrl+K</span> to toggle.</p>
 
-                                        <label className="block text-xs font-medium mb-1 text-white/80">Ambient Sound</label>
-                                        <select
+                                        <p className="text-xs text-white/60 mt-1 mb-4">
+                                            Focus on the background with ambient sound. 
+                                            <span className="font-mono bg-white/10 px-1 py-0.5 rounded ml-1">Ctrl+K</span> to toggle.
+                                        </p>
+
+                                        <ZenDropdown
+                                            label="Ambient Sound"
                                             value={zenMusic}
-                                            onClick={(e) => e.stopPropagation()}
-                                            onChange={(e) => setZenMusic(e.target.value)}
-                                            className="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 focus:outline-none focus:border-white/40 focus:bg-white/20 transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                            onChange={setZenMusic}
+                                            options={soundscapes}
                                             disabled={!isOnline || !zenMode}
-                                        >
-                                            {soundscapes.map(s => <option key={s.key} value={s.key} className="bg-gray-800 text-white">{s.name}</option>)}
-                                        </select>
-                                    </div>
+                                        />
+                                        </div>
                                 </div>
                             </div>
                         )}
