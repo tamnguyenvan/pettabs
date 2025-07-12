@@ -58,11 +58,12 @@ const NewTab = () => {
 
             const content = await getDailyContent(category);
             
-            if (isActive && content) {
+            if (isActive && content && content?.image?.url) {
                 // Tách riêng việc tải và áp dụng background
                 if (content.image?.url) {
                     // Preload ảnh, và chỉ khi xong mới cập nhật state
-                    preloadImage(content.image.url);
+                    const fullCleanUrl = `${WORKER_URL}/${content.image.url.replace(/^\//, '')}`;
+                    preloadImage(fullCleanUrl);
                 }
                 
                 setDailyContent({

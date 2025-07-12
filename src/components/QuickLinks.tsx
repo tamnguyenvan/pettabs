@@ -357,7 +357,7 @@ const QuickLinks = () => {
                     <>
                       <div className="mb-4">
                         <div className="text-sm text-white/70 mb-3">Choose from popular sites:</div>
-                        <div className="grid grid-cols-5 gap-3">
+                        <div className="grid grid-cols-6 gap-3">
                           {getDeletedDefaultLinks().map(link => (
                             <button
                               key={link.id}
