@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS: Settings = {
     attribution: null,
   },
   sound: {
-    zenMusic: 'none',
+    zenMusic: 'light-rain',
   },
 };
 

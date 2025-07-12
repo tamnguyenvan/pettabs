@@ -102,6 +102,7 @@ const NewTab = () => {
                 try {
                     const response = await fetch(`${WORKER_URL}/api/soundscapes`);
                     if (response.ok) {
+                        console.log("Soundscapes fetched successfully.");
                         const data: Soundscape[] = await response.json();
                         setSoundscapes(data);
                     }
@@ -118,23 +119,40 @@ const NewTab = () => {
 
     // 4. Xử lý logic nhạc nền - Chỉ phát khi đang ở chế độ Zen
     useEffect(() => {
-        if (isOnline && audioRef.current) {
-            // Xác định bản nhạc cần phát dựa trên chế độ hiện tại
-            const musicKey = settings.sound.zenMusic;
+        const audio = audioRef.current;
+        if (!audio) return; // Luôn kiểm tra để đảm bảo audio element đã tồn tại
 
-            if (musicKey === 'none') {
-                audioRef.current.pause();
-            } else {
-                const currentTrack = soundscapes.find(s => s.key === musicKey);
-                if (currentTrack) {
-                    if (audioRef.current.src !== currentTrack.audio_url) {
-                        audioRef.current.src = currentTrack.audio_url;
-                    }
-                    audioRef.current.play().catch(e => console.log('Autoplay was prevented.', e));
+        // Biến này sẽ quyết định âm thanh có nên phát hay không
+        const shouldPlay = 
+            isOnline && 
+            settings.appearance.zenMode && 
+            settings.sound.zenMusic !== 'none';
+
+        if (shouldPlay) {
+            // Chỉ khi nên phát, chúng ta mới xử lý logic tìm và chạy nhạc
+            const musicKey = settings.sound.zenMusic;
+            const currentTrack = soundscapes.find(s => s.key === musicKey);
+            
+            if (currentTrack) {
+                // Chỉ đổi nguồn nhạc khi cần thiết để tránh tải lại không cần thiết
+                if (audio.src !== currentTrack.audio_url) {
+                    audio.src = currentTrack.audio_url;
                 }
+                // Thử phát nhạc và bắt lỗi nếu trình duyệt chặn tự động phát
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Audio autoplay was prevented by the browser.", error);
+                    });
+                }
+            } else {
+                // Trường hợp có musicKey nhưng không tìm thấy track -> dừng nhạc
+                audio.pause();
             }
-        } else if (audioRef.current) {
-            audioRef.current.pause();
+        } else {
+            // Trong mọi trường hợp khác (không online, không ở zen mode, hoặc nhạc là 'none')
+            // -> Dừng nhạc
+            audio.pause();
         }
     }, [
         settings.appearance.zenMode, 

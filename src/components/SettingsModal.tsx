@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Info, Sparkles, Wind, Settings, MessageCircle } from 'lucide-react';
+import { X, Info, Sparkles, Wind, Settings, MessageCircle, RotateCcw } from 'lucide-react';
 import ZenDropdown from './ui/DropDown';
 
 // Định nghĩa Soundscape ở đây để tái sử dụng
@@ -70,7 +70,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     // === RENDER ===
     return (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 animate-fade-in">
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 w-[500px] h-auto max-h-[90vh] flex flex-col text-white shadow-2xl border border-white/5 transition-all duration-200">
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 w-[500px] h-[600px] flex flex-col text-white shadow-2xl border border-white/5 transition-all duration-200">
                 {/* Header */}
                 <div className="flex-shrink-0 flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-semibold">Settings</h2>
@@ -98,10 +98,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         </button>
                     </div>
 
-                    {/* Tab Content */}
-                    <div className="flex-1 overflow-y-auto pr-4 -mr-4">
+                    {/* Tab Content - Fixed height container */}
+                    <div className="flex-1 overflow-y-auto pr-4 -mr-4 min-h-0">
                         {activeTab === 'appearance' && (
-                            <div className="space-y-8 animate-fade-in">
+                            <div className="space-y-8 animate-fade-in pb-4">
                                 
                                 <div>
                                     <label className="block text-sm font-bold mb-3 text-white">Background Theme</label>
@@ -179,7 +179,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         )}
                         
                         {activeTab === 'about' && (
-                            <div className="space-y-6 animate-fade-in">
+                            <div className="space-y-6 animate-fade-in pb-4">
                                 <div className="space-y-4">
                                     <h3 className="text-lg font-semibold text-white/90">PetTabs</h3>
                                     <p className="text-sm text-white/70">

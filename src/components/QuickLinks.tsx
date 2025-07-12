@@ -59,7 +59,7 @@ const SortableItem = ({ link, removeLink, renderLinkIcon, truncateText, isBeingD
       className={`
         relative flex flex-col items-center justify-center bg-white/5 rounded-2xl 
         transition-all duration-200 hover:bg-white/10 hover:shadow-xl hover:-translate-y-0.5 
-        border border-white/5 backdrop-blur-sm w-24 h-24 p-2 cursor-grab active:cursor-grabbing
+        border border-white/5 backdrop-blur-sm w-24 h-24 p-2 cursor-pointer active:cursor-pointer
         ${isDragging ? 'scale-90 shadow-2xl bg-white/15 opacity-80' : ''}
       `}
       onClick={handleClick}
@@ -132,6 +132,13 @@ const QuickLinks = () => {
     icon: 'default',
     isCustom: true
   });
+  const [initialValues, setInitialValues] = useState({
+    name: '',
+    url: 'https://'
+  });
+  
+  const showNameCounter = newLink.name === '' || newLink.name === initialValues.name;
+  const showUrlCounter = newLink.url === 'https://' || newLink.url === initialValues.url;
 
   // Save to localStorage whenever links change
   useEffect(() => {
@@ -141,6 +148,16 @@ const QuickLinks = () => {
       console.error('Failed to save links:', error);
     }
   }, [links]);
+  
+  // Reset initial values when opening the add form
+  useEffect(() => {
+    if (isAdding) {
+      setInitialValues({
+        name: newLink.name,
+        url: newLink.url
+      });
+    }
+  }, [isAdding]);
 
   const truncateText = (text: string, maxLength: number) => {
     return text.length > maxLength ? text.substring(0, maxLength).trim() + '...' : text;
@@ -161,21 +178,24 @@ const QuickLinks = () => {
 
   const addLink = () => {
     if (links.length >= MAX_LINKS) {
-      alert(`Tối đa ${MAX_LINKS} liên kết`);
+      alert(`Maximum of ${MAX_LINKS} links allowed`);
       return;
     }
+    
+    // Reset to initial values after adding
+    setInitialValues({ name: '', url: 'https://' });
 
     if (newLink.name && newLink.url && newLink.url !== 'https://') {
       const trimmedName = newLink.name.trim();
       const trimmedUrl = newLink.url.trim();
       
       if (trimmedName.length > MAX_NAME_LENGTH) {
-        alert(`Tên không được vượt quá ${MAX_NAME_LENGTH} ký tự`);
+        alert(`Name cannot exceed ${MAX_NAME_LENGTH} characters`);
         return;
       }
       
       if (trimmedUrl.length > MAX_URL_LENGTH) {
-        alert(`URL không được vượt quá ${MAX_URL_LENGTH} ký tự`);
+        alert(`URL cannot exceed ${MAX_URL_LENGTH} characters`);
         return;
       }
 
@@ -392,9 +412,11 @@ const QuickLinks = () => {
                           className="w-full px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/50 text-base focus:outline-none focus:ring-2 focus:ring-white/30"
                           autoFocus
                         />
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-white/40">
-                          {newLink.name.length}/{MAX_NAME_LENGTH}
-                        </div>
+                        {showNameCounter && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-white/40">
+                            {newLink.name.length}/{MAX_NAME_LENGTH}
+                          </div>
+                        )}
                       </div>
                       <div className="relative">
                         <input
@@ -409,9 +431,11 @@ const QuickLinks = () => {
                           }}
                           className="w-full px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/50 text-base focus:outline-none focus:ring-2 focus:ring-white/30"
                         />
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-white/40">
-                          {newLink.url.length}/{MAX_URL_LENGTH}
-                        </div>
+                        {showUrlCounter && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-white/40">
+                            {newLink.url.length}/{MAX_URL_LENGTH}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
