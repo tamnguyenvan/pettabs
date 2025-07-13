@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Info, Sparkles, Wind, Settings, MessageCircle, RotateCcw } from 'lucide-react';
-import ZenDropdown from './ui/DropDown';
-
-// Định nghĩa Soundscape ở đây để tái sử dụng
-export interface Soundscape {
-  key: string;
-  name: string;
-  audio_url: string;
-}
+import ZenDropdown from './ui/Dropdown';
+import { Soundscape } from '../types';
 
 // Props cho component
 interface SettingsModalProps {
@@ -220,7 +214,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                 <div className="pt-4 border-t border-white/10">
                                     <h4 className="text-sm font-medium text-white/90 mb-3">Attributions</h4>
                                     <ul className="space-y-2 text-sm text-white/70">
-                                        <li>• Icons by <a href="https://lucide.dev" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:underline">Lucide</a></li>
                                         <li>• Images by <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:underline">Unsplash</a></li>
                                     </ul>
                                 </div>

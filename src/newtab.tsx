@@ -9,11 +9,10 @@ import Fact from './components/Fact';
 import SoundWave from './components/SoundWave';
 import ImageAttribution from './components/ImageAttribution';
 import QuickLinks from './components/QuickLinks';
-import { getDailyContent } from './lib/data-manager';
+import { getOrFetchContent, getSoundscapes } from './lib/data-manager';
 import { Settings, loadSettings, updateSettings } from './lib/settings';
-import { Soundscape } from './components/SettingsModal';
-import { Attribution, FactData } from './types';
-import { WORKER_URL } from './lib/constants';
+import { Soundscape, Attribution, FactData } from './types';
+import { WORKER_URL, OFFLINE_FALLBACK_IMAGE } from './lib/constants';
 
 // --- Main App Component ---
 const NewTab = () => {
@@ -28,7 +27,7 @@ const NewTab = () => {
     }>({ fact: null, attribution: null });
     
     // **STATE MỚI ĐỂ QUẢN LÝ BACKGROUND AN TOÀN**
-    const [backgroundUrl, setBackgroundUrl] = useState(''); 
+    const [backgroundUrl, setBackgroundUrl] = useState(OFFLINE_FALLBACK_IMAGE); 
     const [isLoading, setIsLoading] = useState(true);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const audioRef = useRef<HTMLAudioElement>(null);
@@ -47,76 +46,65 @@ const NewTab = () => {
     // 2. Tải nội dung chính (ảnh, fact) khi category thay đổi
     useEffect(() => {
         let isActive = true;
-
-        const loadContent = async () => {
-            setIsLoading(true);
-            const category = settings.background.category;
-            if (!category) {
-                setIsLoading(false);
+        
+        async function initialize() {
+            // Chỉ cần gọi MỘT hàm duy nhất
+            const content = await getOrFetchContent(settings.background.category);
+            
+            if (!isActive) {
+                 // Nếu người dùng đóng tab, thu hồi blob URL nếu có
+                if (content && content.imageUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(content.imageUrl);
+                }
                 return;
             }
 
-            const content = await getDailyContent(category);
-            
-            if (isActive && content && content?.image?.url) {
-                // Tách riêng việc tải và áp dụng background
-                if (content.image?.url) {
-                    // Preload ảnh, và chỉ khi xong mới cập nhật state
-                    const fullCleanUrl = `${WORKER_URL}/${content.image.url.replace(/^\//, '')}`;
-                    preloadImage(fullCleanUrl);
-                }
-                
-                setDailyContent({
-                    fact: content.fact || null,
-                    attribution: content.image?.attribution || null,
-                });
+            // Cập nhật UI
+            setBackgroundUrl(content.imageUrl);
+            setDailyContent({
+                fact: content.fact,
+                attribution: content.attribution,
+            });
+            setIsLoading(false);
+        }
+
+        initialize();
+
+        // Cleanup
+        return () => {
+            isActive = false;
+            // Thu hồi blob URL khi component unmount để tránh memory leak
+            if (backgroundUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(backgroundUrl);
             }
         };
-
-        // Hàm preload mới: khi tải xong sẽ cập nhật state URL
-        const preloadImage = (url: string) => {
-            const img = new Image();
-            img.src = url;
-            img.onload = () => {
-                if (isActive) {
-                    // CẬP NHẬT STATE CỦA REACT
-                    setBackgroundUrl(url); 
-                    // Set loading false sau khi ảnh đã sẵn sàng để hiển thị
-                    setTimeout(() => setIsLoading(false), 50); 
-                }
-            };
-            img.onerror = () => {
-                console.error("Failed to load background image:", url);
-                if (isActive) setIsLoading(false); // Vẫn phải tắt loading nếu lỗi
-            };
-        };
-
-        loadContent();
-
-        return () => { isActive = false; };
     }, [settings.background.category]);
 
-    // 3. Fetch danh sách soundscapes (chỉ một lần và khi online)
+    // 3. Fetch danh sách soundscapes từ cache hoặc network
     useEffect(() => {
-        if (isOnline) {
-            const fetchSoundscapes = async () => {
-                try {
-                    const response = await fetch(`${WORKER_URL}/api/soundscapes`);
-                    if (response.ok) {
-                        console.log("Soundscapes fetched successfully.");
-                        const data: Soundscape[] = await response.json();
-                        setSoundscapes(data);
-                    }
-                } catch (error) {
-                    console.error("Failed to fetch soundscapes:", error);
+        let isActive = true;
+        
+        const loadSoundscapes = async () => {
+            try {
+                const soundscapes = await getSoundscapes();
+                if (isActive) {
+                    setSoundscapes(soundscapes);
                 }
-            };
-            fetchSoundscapes();
-        } else {
-            // Nếu offline, xóa danh sách soundscapes để tránh lỗi
-            setSoundscapes([]);
-        }
-    }, [isOnline]);
+            } catch (error) {
+                console.error("Failed to load soundscapes:", error);
+                if (isActive) {
+                    setSoundscapes([]);
+                }
+            }
+        };
+        
+        loadSoundscapes();
+        
+        // Cleanup function
+        return () => {
+            isActive = false;
+        };
+    }, [isOnline]); // Re-run when online status changes
 
     // 4. Xử lý logic nhạc nền - Chỉ phát khi đang ở chế độ Zen
     useEffect(() => {
