@@ -248,7 +248,7 @@ const NewTab = () => {
                         >
                             <SettingsIcon size={18} className="text-white/70 hover:text-white/90 transition-colors" />
                         </button>
-                        {!settings.appearance.showUsage && <Usage />}
+                        {settings.appearance.showUsage !== false && <Usage />}
                     </div>
                     <SettingsModal
                         isOpen={isSettingsOpen}

@@ -46,6 +46,21 @@ const SortableItem = ({ link, removeLink, renderLinkIcon, truncateText, isBeingD
   const handleClick = (e: React.MouseEvent) => {
     if (!isDragging && !isBeingDragged) {
       e.preventDefault();
+      // Middle click (button = 1) or left click with meta/ctrl key
+      if (e.button === 1 || e.metaKey || e.ctrlKey) {
+        window.open(link.url, '_blank', 'noopener,noreferrer');
+      } else {
+        // Regular left click
+        window.open(link.url, '_blank', 'noopener,noreferrer');
+      }
+    }
+  };
+
+  // Handle middle click
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button === 1) { // Middle mouse button
+      e.preventDefault();
+      e.stopPropagation();
       window.open(link.url, '_blank', 'noopener,noreferrer');
     }
   };
@@ -63,6 +78,8 @@ const SortableItem = ({ link, removeLink, renderLinkIcon, truncateText, isBeingD
         ${isDragging ? 'scale-90 shadow-2xl bg-white/15 opacity-80' : ''}
       `}
       onClick={handleClick}
+      onMouseDown={handleMouseDown}
+      onAuxClick={(e) => e.button === 1 && e.preventDefault()}
     >
       <div className="w-full h-full flex flex-col items-center justify-center no-underline">
         <div className="flex-1 flex items-center justify-center">

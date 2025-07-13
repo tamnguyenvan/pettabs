@@ -1,19 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Zap, Image, Music, HelpCircle } from 'lucide-react';
 import { loadSettings, updateSettings } from '../lib/settings';
 
 const Usage = () => {
+    const [isVisible, setIsVisible] = useState(true);
     const settings = loadSettings();
-    const isVisible = settings.appearance.showUsage !== false;
+
+    useEffect(() => {
+        // Initialize visibility from settings
+        setIsVisible(settings.appearance.showUsage !== false);
+    }, [settings.appearance.showUsage]);
 
     const handleClose = () => {
-        updateSettings({
+        const newSettings = {
             ...settings,
             appearance: {
                 ...settings.appearance,
                 showUsage: false
             }
-        });
+        };
+        updateSettings(newSettings);
+        setIsVisible(false);
     };
 
     if (!isVisible) return null;
